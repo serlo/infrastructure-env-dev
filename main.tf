@@ -17,6 +17,8 @@ locals {
   athene2_php_definitions-file_path = "secrets/athene2/definitions.dev.php"
   cloudsql_credentials_path         = "secrets/serlo-dev-cloudsql-421bf4612759.json"
 
+  athene2_notifications-job_image = "eu.gcr.io/serlo-shared/serlo-org-notifications-job:1.0.2"
+
   athene2_database_instance_name = "${local.project}-mysql-instance-23072019-2"
   kpi_database_instance_name     = "${local.project}-postgres-instance-23072019-1"
   kpi_database_username_default  = "serlo"
@@ -161,8 +163,10 @@ module "varnish" {
 }
 
 module "athene2" {
-  source                    = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2?ref=master"
-  httpd_image               = local.athene2_httpd_image
+  source                  = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2?ref=master"
+  httpd_image             = local.athene2_httpd_image
+  notifications-job_image = local.athene2_notifications-job_image
+
   php_image                 = local.athene2_php_image
   php_definitions-file_path = local.athene2_php_definitions-file_path
   php_recaptcha_key         = var.athene2_php_recaptcha_key
@@ -204,11 +208,16 @@ module "kpi_metrics" {
 }
 
 module "kpi" {
-  source = "github.com/serlo/infrastructure-modules-kpi.git//kpi?ref=master"
+  source = "github.com/serlo/infrastructure-modules-kpi.git//kpi?ref=code_p_data-analysis-and-kpi"
   domain = local.domain
 
-  grafana_admin_password = var.kpi_grafana_admin_password
+  grafana_image    = "eu.gcr.io/serlo-shared/kpi-grafana:latest"
+  aggregator_image = "eu.gcr.io/serlo-shared/kpi-aggregator:1.3.2"
 
+  grafana_admin_password = var.kpi_grafana_admin_password
+  grafana_serlo_password = var.kpi_grafana_serlo_password
+
+  athene2_database_username_readonly = "root"
   athene2_database_password_readonly = var.athene2_database_password_readonly
   athene2_database_host              = module.gcloud_mysql.database_private_ip_address
 
