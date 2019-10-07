@@ -208,23 +208,22 @@ module "kpi_metrics" {
 }
 
 module "kpi" {
-  source = "github.com/serlo/infrastructure-modules-kpi.git//kpi?ref=code_p_data-analysis-and-kpi"
+  source = "github.com/serlo/infrastructure-modules-kpi.git//kpi?ref=v1.1.0"
   domain = local.domain
-
-  grafana_image    = "eu.gcr.io/serlo-shared/kpi-grafana:latest"
-  aggregator_image = "eu.gcr.io/serlo-shared/kpi-aggregator:1.3.2"
 
   grafana_admin_password = var.kpi_grafana_admin_password
   grafana_serlo_password = var.kpi_grafana_serlo_password
 
-  athene2_database_password_readonly = var.athene2_database_password_readonly
   athene2_database_host              = module.gcloud_mysql.database_private_ip_address
+  athene2_database_password_readonly = var.athene2_database_password_readonly
 
   kpi_database_host              = module.gcloud_postgres.database_private_ip_address
-  kpi_database_username_default  = local.kpi_database_username_default
   kpi_database_password_default  = var.kpi_kpi_database_password_default
-  kpi_database_username_readonly = local.kpi_database_username_readonly
   kpi_database_password_readonly = var.kpi_kpi_database_password_readonly
+
+  grafana_image        = "eu.gcr.io/serlo-shared/kpi-grafana:1.0.1"
+  mysql_importer_image = "eu.gcr.io/serlo-shared/kpi-mysql-importer:1.2.1"
+  aggregator_image     = "eu.gcr.io/serlo-shared/kpi-aggregator:1.3.2"
 }
 
 module "ingress-nginx" {
