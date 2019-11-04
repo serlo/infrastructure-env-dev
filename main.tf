@@ -7,7 +7,7 @@ locals {
 
   credentials_path = "secrets/serlo-dev-terraform-6ee61882fa66.json"
   service_account  = "terraform@serlo-dev.iam.gserviceaccount.com"
-  region = "europe-west3"
+  region           = "europe-west3"
 
   cluster_machine_type = "n1-standard-2"
 
@@ -22,7 +22,7 @@ locals {
   legacy-editor-renderer_image = "eu.gcr.io/serlo-shared/serlo-org-legacy-editor-renderer:1.0.0"
   editor-renderer_image        = "eu.gcr.io/serlo-shared/serlo-org-editor-renderer:2.0.9"
 
-  kpi_database_instance_name     = "${local.project}-postgres-instance-23072019-1"
+  kpi_database_instance_name = "${local.project}-postgres-instance-23072019-1"
 
   ingress_tls_certificate_path = "secrets/serlo_dev_selfsigned.crt"
   ingress_tls_key_path         = "secrets/serlo_dev_selfsigned.key"
@@ -80,7 +80,7 @@ module "gcloud" {
   source                   = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud?ref=15666ddbd5b93c74c28781fec90a7b03b99b6377"
   project                  = local.project
   clustername              = "${local.project}-cluster"
-  location                     = "europe-west3-a"
+  location                 = "europe-west3-a"
   region                   = local.region
   machine_type             = local.cluster_machine_type
   issue_client_certificate = true
@@ -133,7 +133,11 @@ module "gcloud_postgres" {
 }
 
 module "gcloud_dbdump_reader" {
-  source = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_dbdump_reader?ref=master"
+  source = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_dbdump_reader?ref=master" #providers = {
+
+  providers = {
+    google = "google"
+  }
 }
 
 module "athene2_dbsetup" {
@@ -143,10 +147,19 @@ module "athene2_dbsetup" {
   database_host               = module.gcloud_mysql.database_private_ip_address
   gcloud_service_account_key  = module.gcloud_dbdump_reader.account_key
   gcloud_service_account_name = module.gcloud_dbdump_reader.account_name
+
+  providers = {
+    null       = "null"
+    kubernetes = "kubernetes"
+  }
 }
 
 module "gcloud_dbdump_writer" {
   source = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_dbdump_writer?ref=master"
+
+  providers = {
+    google = "google"
+  }
 }
 
 module "athene2_dbdump" {
@@ -157,10 +170,18 @@ module "athene2_dbdump" {
   gcloud_service_account_key  = module.gcloud_dbdump_writer.account_key
   gcloud_service_account_name = module.gcloud_dbdump_writer.account_name
   gcloud_bucket_url           = "gs://anonymous-data/serlo-dev"
+
+  providers = {
+    kubernetes = "kubernetes"
+  }
 }
 
 module "athene2_metrics" {
   source = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_metrics?ref=master"
+
+  providers = {
+    google = "google"
+  }
 }
 
 module "legacy-editor-renderer" {
@@ -253,6 +274,9 @@ module "athene2" {
 
 module "kpi_metrics" {
   source = "github.com/serlo/infrastructure-modules-kpi.git//kpi_metrics?ref=master"
+  providers = {
+    google = "google"
+  }
 }
 
 module "kpi" {
@@ -272,6 +296,10 @@ module "kpi" {
   grafana_image        = "eu.gcr.io/serlo-shared/kpi-grafana:1.0.1"
   mysql_importer_image = "eu.gcr.io/serlo-shared/kpi-mysql-importer:1.2.1"
   aggregator_image     = "eu.gcr.io/serlo-shared/kpi-aggregator:1.3.2"
+
+  providers = {
+    kubernetes = "kubernetes"
+  }
 }
 
 module "ingress-nginx" {
