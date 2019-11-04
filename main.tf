@@ -26,6 +26,7 @@ locals {
 
   legacy-editor-renderer_image = "eu.gcr.io/serlo-shared/legacy-editor-renderer:latest"
   editor-renderer_image        = "eu.gcr.io/serlo-shared/editor-renderer:latest"
+  hydra_image                  = "eu.gcr.io/serlo-shared/hydra:latest"
 
   ingress_tls_certificate_path = "secrets/serlo_dev_selfsigned.crt"
   ingress_tls_key_path         = "secrets/serlo_dev_selfsigned.key"
@@ -68,7 +69,7 @@ module "gcloud" {
   source                   = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud?ref=master"
   project                  = local.project
   clustername              = "${local.project}-cluster"
-  zone                     = "europe-west3-a"
+  location                 = "europe-west3-a"
   region                   = local.region
   machine_type             = local.cluster_machine_type
   issue_client_certificate = true
@@ -148,6 +149,22 @@ module "editor-renderer" {
   app_replicas = 1
 }
 
+module "hydra" {
+  source                    = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=master"
+  image                     = local.hydra_image
+  namespace                 = kubernetes_namespace.athene2_namespace.metadata.0.name
+  image_pull_policy         = "Always"
+  container_limits_cpu      = "500m"
+  container_limits_memory   = "200Mi"
+  container_requests_cpu    = "250m"
+  container_requests_memory = "100Mi"
+  app_replicas              = 1
+  url_login                 = "https://de.${local.domain}/auth/hydra/login"
+  url_consent               = "https://de.${local.domain}/auth/hydra/consent"
+  dsn                       = "postgres://serlo:${var.kpi_kpi_database_password_postgres}@${module.gcloud_postgres.database_private_ip_address}/hydra"
+  secret                    = "1234567890123456789"
+}
+
 module "varnish" {
   source         = "github.com/serlo/infrastructure-modules-shared.git//varnish?ref=master"
   namespace      = kubernetes_namespace.athene2_namespace.metadata.0.name
@@ -197,6 +214,7 @@ module "athene2" {
 
   legacy_editor_renderer_uri = module.legacy-editor-renderer.service_uri
   editor_renderer_uri        = module.editor-renderer.service_uri
+  hydra_uri                  = module.hydra.admin_uri
 
   enable_basic_auth = true
   enable_cronjobs   = true
@@ -236,9 +254,10 @@ module "ingress-nginx" {
 }
 
 module "cloudflare" {
-  source = "github.com/serlo/infrastructure-modules-env-shared.git//cloudflare?ref=master"
-  domain = local.domain
-  ip     = module.gcloud.staticip_regional_address
+  source  = "github.com/serlo/infrastructure-modules-env-shared.git//cloudflare?ref=master"
+  domain  = local.domain
+  ip      = module.gcloud.staticip_regional_address
+  zone_id = "1064522c8625cd2973a8a61910106e01"
 }
 
 #####################################################################

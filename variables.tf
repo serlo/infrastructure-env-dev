@@ -57,3 +57,7 @@ variable "athene2_php_recaptcha_secret" {
 variable "athene2_php_newsletter_key" {
   description = "Key for newsletter"
 }
+
+variable "hydra_secret" {
+  description = "Secret for hydra"
+}
