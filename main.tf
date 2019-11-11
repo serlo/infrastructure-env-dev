@@ -61,6 +61,19 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(module.gcloud.cluster_ca_certificate)
 }
 
+provider "helm" {
+  version = "~> 0.10"
+  kubernetes {
+    host     = "${module.gcloud.host}"
+    username = ""
+    password = ""
+
+    client_certificate     = base64decode(module.gcloud.client_certificate)
+    client_key             = base64decode(module.gcloud.client_key)
+    cluster_ca_certificate = base64decode(module.gcloud.cluster_ca_certificate)
+  }
+}
+
 provider "null" {
   version = "~> 2.1"
 }
@@ -316,7 +329,7 @@ module "ingress-nginx" {
 }
 
 module "cloudflare" {
-  source  = "github.com/serlo/infrastructure-modules-env-shared.git//cloudflare?ref=0013c09924b3a06c5cc48d77f65cce72193b5633"
+  source  = "github.com/serlo/infrastructure-modules-env-shared.git//cloudflare?ref=rocket_chat"
   domain  = local.domain
   ip      = module.gcloud.staticip_regional_address
   zone_id = "1064522c8625cd2973a8a61910106e01"
@@ -329,7 +342,6 @@ module "cloudflare" {
 #####################################################################
 # ingress
 #####################################################################
-
 resource "kubernetes_ingress" "kpi_ingress" {
   metadata {
     name      = "kpi-ingress"
@@ -407,8 +419,49 @@ resource "kubernetes_namespace" "kpi_namespace" {
   }
 }
 
+resource "kubernetes_namespace" "community_namespace" {
+  metadata {
+    name = "community"
+  }
+}
+
 resource "kubernetes_namespace" "ingress_nginx_namespace" {
   metadata {
     name = "ingress-nginx"
   }
 }
+
+resource "helm_release" "rocket-chat_deployment" {
+  name      = "rocket-chat"
+  chart     = "stable/rocketchat"
+  namespace = kubernetes_namespace.community_namespace.metadata.0.name
+  set {
+    name  = "image.tag"
+    value = "2.2.0"
+  }
+
+  set {
+    name  = "mongodb.mongodbPassword"
+    value = "putMeInCredentials"
+  }
+
+  set {
+    name  = "mongodb.mongodbRootPassword"
+    value = "putMeInCredentials"
+  }
+
+  set {
+    name  = "mongodb.enabled"
+    value = "true"
+  }
+
+  #   set {
+  #     name  = "ingress.enabled"
+  #     value = "true"
+  #   }
+
+  # ingress.annotations	Annotations for the ingress	{}
+  # ingress.path	Path of the ingress	/
+  # ingress.tls
+}
+
