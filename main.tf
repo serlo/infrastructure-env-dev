@@ -63,6 +63,7 @@ provider "kubernetes" {
 
 provider "helm" {
   version = "~> 0.10"
+  debug   = true
   kubernetes {
     host     = "${module.gcloud.host}"
     username = ""
@@ -125,11 +126,11 @@ module "gcloud_mysql" {
 }
 
 module "gcloud_postgres" {
-  source                   = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_postgres?ref=15666ddbd5b93c74c28781fec90a7b03b99b6377"
+  source                   = "../infrastructure-modules-gcloud/gcloud_postgres"
   database_instance_name   = local.kpi_database_instance_name
   database_connection_name = "${local.project}:${local.region}:${local.kpi_database_instance_name}"
   database_region          = local.region
-  database_name            = "kpi"
+  database_names           = ["kpi", "hydra"]
   database_private_network = module.gcloud.network
   private_ip_address_range = module.gcloud.private_ip_address_range
 
@@ -239,7 +240,7 @@ module "varnish" {
 }
 
 module "athene2" {
-  source                  = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2?ref=088cfd39b8a6c2b9e79484195c5a90389dd2e8bd"
+  source                  = "../infrastructure-modules-serlo.org/athene2"
   httpd_image             = local.athene2_httpd_image
   notifications-job_image = local.athene2_notifications-job_image
 
@@ -273,6 +274,7 @@ module "athene2" {
 
   legacy_editor_renderer_uri = module.legacy-editor-renderer.service_uri
   editor_renderer_uri        = module.editor-renderer.service_uri
+  hydra_uri                  = "http://hydra-admin:4445"
 
   enable_basic_auth = true
   enable_cronjobs   = true
@@ -293,7 +295,7 @@ module "kpi_metrics" {
 }
 
 module "kpi" {
-  source = "github.com/serlo/infrastructure-modules-kpi.git//kpi?ref=v1.2.0"
+  source = "github.com/serlo/infrastructure-modules-kpi.git//kpi?ref=v1.3.0"
   domain = local.domain
 
   grafana_admin_password = var.kpi_grafana_admin_password
@@ -463,5 +465,50 @@ resource "helm_release" "rocket-chat_deployment" {
   # ingress.annotations	Annotations for the ingress	{}
   # ingress.path	Path of the ingress	/
   # ingress.tls
+}
+
+data "helm_repository" "ory" {
+  name = "ory"
+  url  = "https://k8s.ory.sh/helm/charts"
+}
+resource "random_string" "hydra_system_secret" {
+  length  = 32
+  special = false
+}
+resource "helm_release" "hydra_deployment" {
+  name       = "hydra"
+  repository = data.helm_repository.ory.metadata[0].name
+  chart      = "hydra"
+  namespace  = kubernetes_namespace.community_namespace.metadata.0.name
+  timeout    = 100
+
+    values = [
+      "${file("hydra/config.yaml")}"
+    ]
+
+  set {
+    name  = "hydra.config.secrets.system"
+    value = random_string.hydra_system_secret.result
+  }
+
+  set {
+    name  = "hydra.config.dsn"
+    value = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
+  }
+
+  set {
+    name  = "hydra.config.urls.self.issuer"
+    value = "https://hydra-public/"
+  }
+
+  set {
+    name  = "hydra.config.urls.login"
+    value = "https://de.${local.domain}/auth/hydra/login"
+  }
+
+  set {
+    name  = "hydra.config.urls.consent"
+    value = "https://de.${local.domain}/auth/hydra/consent"
+  }
 }
 

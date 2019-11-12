@@ -1,0 +1,17 @@
+hydra:
+  config:
+    # e.g.:
+    oidc:
+      # subject_identifiers configures the Subject Identifier algorithm.
+      #
+      # For more information please head over to the documentation:
+      # -> https://www.ory.sh/docs/hydra/advanced#subject-identifier-algorithms
+      subject_identifiers:
+        # which algorithms to enable. Defaults to "public"
+        enabled:
+          - pairwise
+        # configures the pairwise algorithm
+        pairwise:
+          # if "pairwise" is enabled, the salt must be defined.
+          salt: "1234567890123456789"
+  autoMigrate: true
