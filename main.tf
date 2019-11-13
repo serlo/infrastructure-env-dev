@@ -63,7 +63,6 @@ provider "kubernetes" {
 
 provider "helm" {
   version = "~> 0.10"
-  debug   = true
   kubernetes {
     host     = "${module.gcloud.host}"
     username = ""
@@ -274,7 +273,7 @@ module "athene2" {
 
   legacy_editor_renderer_uri = module.legacy-editor-renderer.service_uri
   editor_renderer_uri        = module.editor-renderer.service_uri
-  hydra_uri                  = "http://hydra-admin:4445"
+  hydra_uri                  = module.hydra.admin_uri
 
   enable_basic_auth = true
   enable_cronjobs   = true
@@ -339,6 +338,15 @@ module "cloudflare" {
   providers = {
     cloudflare = "cloudflare"
   }
+}
+
+module "hydra" {
+  source      = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=master"
+  dsn         = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
+  url_login   = "https://de.${local.domain}/auth/hydra/login"
+  url_consent = "https://de.${local.domain}/auth/hydra/consent"
+  namespace   = kubernetes_namespace.community_namespace.metadata.0.name
+  salt        = "1234567890123456789"
 }
 
 #####################################################################
@@ -465,49 +473,4 @@ resource "helm_release" "rocket-chat_deployment" {
   # ingress.annotations	Annotations for the ingress	{}
   # ingress.path	Path of the ingress	/
   # ingress.tls
-}
-
-data "helm_repository" "ory" {
-  name = "ory"
-  url  = "https://k8s.ory.sh/helm/charts"
-}
-resource "random_string" "hydra_system_secret" {
-  length  = 32
-  special = false
-}
-resource "helm_release" "hydra_deployment" {
-  name       = "hydra"
-  repository = data.helm_repository.ory.metadata[0].name
-  chart      = "hydra"
-  namespace  = kubernetes_namespace.community_namespace.metadata.0.name
-  timeout    = 100
-
-  values = [
-    file("hydra/config.yaml")
-  ]
-
-  set {
-    name  = "hydra.config.secrets.system"
-    value = random_string.hydra_system_secret.result
-  }
-
-  set {
-    name  = "hydra.config.dsn"
-    value = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
-  }
-
-  set {
-    name  = "hydra.config.urls.self.issuer"
-    value = "https://hydra-public/"
-  }
-
-  set {
-    name  = "hydra.config.urls.login"
-    value = "https://de.${local.domain}/auth/hydra/login"
-  }
-
-  set {
-    name  = "hydra.config.urls.consent"
-    value = "https://de.${local.domain}/auth/hydra/consent"
-  }
 }
