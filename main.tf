@@ -330,7 +330,7 @@ module "ingress-nginx" {
 }
 
 module "cloudflare" {
-  source  = "github.com/serlo/infrastructure-modules-env-shared.git//cloudflare?ref=rocket_chat"
+  source  = "../infrastructure-modules-env-shared/cloudflare"
   domain  = local.domain
   ip      = module.gcloud.staticip_regional_address
   zone_id = "1064522c8625cd2973a8a61910106e01"
@@ -341,10 +341,11 @@ module "cloudflare" {
 }
 
 module "hydra" {
-  source      = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=master"
+  source      = "../infrastructure-modules-shared/hydra"
   dsn         = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
   url_login   = "https://de.${local.domain}/auth/hydra/login"
   url_consent = "https://de.${local.domain}/auth/hydra/consent"
+  public_host = "hydra.${local.domain}"
   namespace   = kubernetes_namespace.community_namespace.metadata.0.name
   salt        = "1234567890123456789"
 }
@@ -444,33 +445,53 @@ resource "kubernetes_namespace" "ingress_nginx_namespace" {
 resource "helm_release" "rocket-chat_deployment" {
   name      = "rocket-chat"
   chart     = "stable/rocketchat"
-  namespace = kubernetes_namespace.community_namespace.metadata.0.name
+  namespace = kubernetes_namespace.community_namespace.metadata.0.name // set {
+  //   name  = "image.tag"
+  //   value = "2.2.0"
+  // }
+
   set {
-    name  = "image.tag"
-    value = "2.2.0"
+    name  = "host"
+    value = "community.${local.domain}"
+  }
+
+  set {
+    name  = "replicaCount"
+    value = "3"
+  }
+
+  set {
+    name  = "minAvailable"
+    value = "2"
   }
 
   set {
     name  = "mongodb.mongodbPassword"
-    value = "putMeInCredentials"
+    value = "password"
   }
 
   set {
     name  = "mongodb.mongodbRootPassword"
-    value = "putMeInCredentials"
+    value = "password"
   }
 
   set {
-    name  = "mongodb.enabled"
+    name  = "mongodb.mongodbUsername"
+    value = "username"
+  }
+
+  set {
+    name  = "mongodb.mongodbDatabase"
+    value = "rocket-chat-db"
+  }
+
+  set {
+    name  = "ingress.enabled"
     value = "true"
   }
 
-  #   set {
-  #     name  = "ingress.enabled"
-  #     value = "true"
-  #   }
-
-  # ingress.annotations	Annotations for the ingress	{}
-  # ingress.path	Path of the ingress	/
-  # ingress.tls
+  set {
+    name  = "ingress.path"
+    value = "/"
+  }
 }
