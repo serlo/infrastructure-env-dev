@@ -126,7 +126,7 @@ module "gcloud_mysql" {
 }
 
 module "gcloud_postgres" {
-  source                   = "../infrastructure-modules-gcloud/gcloud_postgres"
+  source                   = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_postgres?ref=4834fc2bb1d4de1f89d06ecc6060d0e35da10b8e"
   database_instance_name   = local.kpi_database_instance_name
   database_connection_name = "${local.project}:${local.region}:${local.kpi_database_instance_name}"
   database_region          = local.region
@@ -147,7 +147,7 @@ module "gcloud_postgres" {
 }
 
 module "gcloud_dbdump_reader" {
-  source = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_dbdump_reader?ref=master" #providers = {
+  source = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_dbdump_reader?ref=master"
 
   providers = {
     google = "google"
@@ -155,7 +155,7 @@ module "gcloud_dbdump_reader" {
 }
 
 module "athene2_dbsetup" {
-  source                      = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_dbsetup?ref=master"
+  source                      = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_dbsetup?ref=089269eaccfa66c65362fe92d014303c39f4449d"
   namespace                   = kubernetes_namespace.athene2_namespace.metadata.0.name
   database_password_default   = var.athene2_database_password_default
   database_host               = module.gcloud_mysql.database_private_ip_address
@@ -191,7 +191,7 @@ module "athene2_dbdump" {
 }
 
 module "athene2_metrics" {
-  source = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_metrics?ref=master"
+  source = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_metrics?ref=089269eaccfa66c65362fe92d014303c39f4449d"
 
   providers = {
     google = "google"
@@ -199,7 +199,7 @@ module "athene2_metrics" {
 }
 
 module "legacy-editor-renderer" {
-  source       = "github.com/serlo/infrastructure-modules-serlo.org.git//legacy-editor-renderer?ref=088cfd39b8a6c2b9e79484195c5a90389dd2e8bd"
+  source       = "github.com/serlo/infrastructure-modules-serlo.org.git//legacy-editor-renderer?ref=089269eaccfa66c65362fe92d014303c39f4449d"
   image        = local.legacy-editor-renderer_image
   namespace    = kubernetes_namespace.athene2_namespace.metadata.0.name
   app_replicas = 1
@@ -210,7 +210,7 @@ module "legacy-editor-renderer" {
 }
 
 module "editor-renderer" {
-  source       = "github.com/serlo/infrastructure-modules-serlo.org.git//editor-renderer?ref=088cfd39b8a6c2b9e79484195c5a90389dd2e8bd"
+  source       = "github.com/serlo/infrastructure-modules-serlo.org.git//editor-renderer?ref=089269eaccfa66c65362fe92d014303c39f4449d"
   image        = local.editor-renderer_image
   namespace    = kubernetes_namespace.athene2_namespace.metadata.0.name
   app_replicas = 1
@@ -240,7 +240,7 @@ module "varnish" {
 }
 
 module "athene2" {
-  source                  = "../infrastructure-modules-serlo.org/athene2"
+  source                  = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2?ref=089269eaccfa66c65362fe92d014303c39f4449d"
   httpd_image             = local.athene2_httpd_image
   notifications-job_image = local.athene2_notifications-job_image
 
@@ -482,9 +482,9 @@ resource "helm_release" "hydra_deployment" {
   namespace  = kubernetes_namespace.community_namespace.metadata.0.name
   timeout    = 100
 
-    values = [
-      "${file("hydra/config.yaml")}"
-    ]
+  values = [
+    file("hydra/config.yaml")
+  ]
 
   set {
     name  = "hydra.config.secrets.system"
@@ -511,4 +511,3 @@ resource "helm_release" "hydra_deployment" {
     value = "https://de.${local.domain}/auth/hydra/consent"
   }
 }
-
