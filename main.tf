@@ -11,8 +11,8 @@ locals {
 
   cluster_machine_type = "n1-standard-2"
 
-  athene2_httpd_image               = "eu.gcr.io/serlo-shared/serlo-org-httpd:3.1.1"
-  athene2_php_image                 = "eu.gcr.io/serlo-shared/serlo-org-php:3.1.1"
+  athene2_httpd_image               = "eu.gcr.io/serlo-shared/serlo-org-httpd:3.3.2"
+  athene2_php_image                 = "eu.gcr.io/serlo-shared/serlo-org-php:3.3.2"
   athene2_php_definitions-file_path = "secrets/athene2/definitions.dev.php"
 
   athene2_notifications-job_image = "eu.gcr.io/serlo-shared/serlo-org-notifications-job:1.0.2"
@@ -167,28 +167,6 @@ module "athene2_dbsetup" {
   }
 }
 
-module "gcloud_dbdump_writer" {
-  source = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_dbdump_writer?ref=master"
-
-  providers = {
-    google = "google"
-  }
-}
-
-module "athene2_dbdump" {
-  source                      = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_dbdump?ref=master"
-  namespace                   = kubernetes_namespace.athene2_namespace.metadata.0.name
-  database_password_readonly  = var.athene2_database_password_readonly
-  database_host               = module.gcloud_mysql.database_private_ip_address
-  gcloud_service_account_key  = module.gcloud_dbdump_writer.account_key
-  gcloud_service_account_name = module.gcloud_dbdump_writer.account_name
-  gcloud_bucket_url           = "gs://anonymous-data/serlo-dev"
-
-  providers = {
-    kubernetes = "kubernetes"
-  }
-}
-
 module "athene2_metrics" {
   source = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_metrics?ref=089269eaccfa66c65362fe92d014303c39f4449d"
 
@@ -220,12 +198,12 @@ module "editor-renderer" {
 }
 
 module "varnish" {
-  source         = "github.com/serlo/infrastructure-modules-shared.git//varnish?ref=5ce903f3b00082ac99b5a591914c3004d01fe7b2"
+  source         = "github.com/serlo/infrastructure-modules-shared.git//varnish?ref=02e58fdcdf0c83d9f99d7e6ca5911768149755a5"
   namespace      = kubernetes_namespace.athene2_namespace.metadata.0.name
   app_replicas   = 1
   image          = "eu.gcr.io/serlo-shared/varnish:6.0.2"
   varnish_memory = "100M"
-  backend_ip     = module.athene2.athene2_service_ip
+  backend_ip     = module.athene2.service_name
 
   resources_limits_cpu      = "50m"
   resources_limits_memory   = "100Mi"
@@ -239,11 +217,8 @@ module "varnish" {
 }
 
 module "athene2" {
-  source                  = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2?ref=089269eaccfa66c65362fe92d014303c39f4449d"
-  httpd_image             = local.athene2_httpd_image
-  notifications-job_image = local.athene2_notifications-job_image
+  source = "github.com/serlo/infrastructure-modules-serlo.org.git//server?ref=85ebee63c7c503b0006a9d18642360a0cc4817fd"
 
-  php_image                 = local.athene2_php_image
   php_definitions-file_path = local.athene2_php_definitions-file_path
   php_recaptcha_key         = var.athene2_php_recaptcha_key
   php_recaptcha_secret      = var.athene2_php_recaptcha_secret
@@ -251,6 +226,8 @@ module "athene2" {
   php_newsletter_key        = var.athene2_php_newsletter_key
   php_tracking_switch       = var.athene2_php_tracking_switch
 
+  database_username_default  = "serlo"
+  database_username_readonly = "serlo_readonly"
   database_password_default  = var.athene2_database_password_default
   database_password_readonly = var.athene2_database_password_readonly
   database_private_ip        = module.gcloud_mysql.database_private_ip_address
@@ -284,6 +261,14 @@ module "athene2" {
     random     = "random"
     template   = "template"
   }
+  feature_flags     = "[]"
+  image_pull_policy = "Always"
+  images = {
+    httpd             = local.athene2_httpd_image
+    php               = local.athene2_php_image
+    notifications_job = local.athene2_notifications-job_image
+  }
+  namespace = kubernetes_namespace.athene2_namespace.metadata.0.name
 }
 
 module "kpi_metrics" {
@@ -341,13 +326,15 @@ module "cloudflare" {
 }
 
 module "hydra" {
-  source      = "../infrastructure-modules-shared/hydra"
-  dsn         = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
-  url_login   = "https://de.${local.domain}/auth/hydra/login"
-  url_consent = "https://de.${local.domain}/auth/hydra/consent"
-  public_host = "hydra.${local.domain}"
-  namespace   = kubernetes_namespace.community_namespace.metadata.0.name
-  salt        = "1234567890123456789"
+  source               = "../infrastructure-modules-shared/hydra"
+  dsn                  = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
+  url_login            = "https://de.${local.domain}/auth/hydra/login"
+  url_consent          = "https://de.${local.domain}/auth/hydra/consent"
+  public_host          = "hydra.${local.domain}"
+  namespace            = kubernetes_namespace.hydra_namespace.metadata.0.name
+  salt                 = "1234567890123456789"
+  tls_certificate_path = "secrets/hydra_selfsigned.crt"
+  tls_key_path         = "secrets/hydra_selfsigned.key"
 }
 
 #####################################################################
@@ -396,8 +383,8 @@ resource "kubernetes_ingress" "athene2_ingress" {
 
   spec {
     backend {
-      service_name = module.varnish.varnish_service_name
-      service_port = module.varnish.varnish_service_port
+      service_name = module.varnish.service_name
+      service_port = module.varnish.service_port
     }
   }
 }
@@ -436,19 +423,32 @@ resource "kubernetes_namespace" "community_namespace" {
   }
 }
 
+resource "kubernetes_namespace" "hydra_namespace" {
+  metadata {
+    name = "hydra"
+  }
+}
+
 resource "kubernetes_namespace" "ingress_nginx_namespace" {
   metadata {
     name = "ingress-nginx"
   }
 }
-
+data "helm_repository" "stable" {
+  name = "stable"
+  url  = "https://kubernetes-charts.storage.googleapis.com/"
+}
 resource "helm_release" "rocket-chat_deployment" {
-  name      = "rocket-chat"
-  chart     = "stable/rocketchat"
-  namespace = kubernetes_namespace.community_namespace.metadata.0.name // set {
-  //   name  = "image.tag"
-  //   value = "2.2.0"
-  // }
+  name       = "rocket-chat"
+  chart      = "stable/rocketchat"
+  repository = data.helm_repository.stable.metadata[0].name
+  namespace  = kubernetes_namespace.community_namespace.metadata.0.name
+
+
+  set {
+    name  = "image.tag"
+    value = "2.2.0"
+  }
 
   set {
     name  = "host"
@@ -457,12 +457,12 @@ resource "helm_release" "rocket-chat_deployment" {
 
   set {
     name  = "replicaCount"
-    value = "3"
+    value = "1"
   }
 
   set {
     name  = "minAvailable"
-    value = "2"
+    value = "1"
   }
 
   set {
@@ -486,8 +486,38 @@ resource "helm_release" "rocket-chat_deployment" {
   }
 
   set {
+    name  = "mongodb.replicaSet.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "mongodb.replicaSet.replicas.secondary"
+    value = "1"
+  }
+
+  set {
+    name  = "mongodb.replicaSet.pdb.minAvailable.secondary"
+    value = "1"
+  }
+
+  set {
+    name  = "mongodb.replicaSet.replicas.arbiter"
+    value = "1"
+  }
+
+  set {
+    name  = "mongodb.replicaSet.pdb.minAvailable.arbiter"
+    value = "1"
+  }
+
+  set {
     name  = "ingress.enabled"
     value = "true"
+  }
+
+  set {
+    name  = "ingress.annotations.kubernetes\\.io/ingress\\.class"
+    value = "nginx"
   }
 
   set {
