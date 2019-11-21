@@ -41,30 +41,20 @@ provider "cloudflare" {
 
 provider "google" {
   version     = "~> 2.18"
-  project     = "${local.project}"
-  credentials = "${file("${local.credentials_path}")}"
+  project     = local.project
+  credentials = file(local.credentials_path)
 }
 
 provider "google-beta" {
   version     = "~> 2.18"
-  project     = "${local.project}"
-  credentials = "${file("${local.credentials_path}")}"
-}
-
-provider "kubernetes" {
-  version          = "~> 1.8"
-  host             = "${module.gcloud.host}"
-  load_config_file = false
-
-  client_certificate     = base64decode(module.gcloud.client_certificate)
-  client_key             = base64decode(module.gcloud.client_key)
-  cluster_ca_certificate = base64decode(module.gcloud.cluster_ca_certificate)
+  project     = local.project
+  credentials = file(local.credentials_path)
 }
 
 provider "helm" {
   version = "~> 0.10"
   kubernetes {
-    host     = "${module.gcloud.host}"
+    host     = module.gcloud.host
     username = ""
     password = ""
 
@@ -72,6 +62,16 @@ provider "helm" {
     client_key             = base64decode(module.gcloud.client_key)
     cluster_ca_certificate = base64decode(module.gcloud.cluster_ca_certificate)
   }
+}
+
+provider "kubernetes" {
+  version          = "~> 1.8"
+  host             = module.gcloud.host
+  load_config_file = false
+
+  client_certificate     = base64decode(module.gcloud.client_certificate)
+  client_key             = base64decode(module.gcloud.client_key)
+  cluster_ca_certificate = base64decode(module.gcloud.cluster_ca_certificate)
 }
 
 provider "null" {
@@ -326,15 +326,32 @@ module "cloudflare" {
 }
 
 module "hydra" {
-  source               = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=339bb895e858277b4cb790b285a0004cc7d6450b"
+  source               = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=fc5434ebfea25af2996ab976ba7a5f75fa21da1c"
   dsn                  = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
   url_login            = "https://de.${local.domain}/auth/hydra/login"
   url_consent          = "https://de.${local.domain}/auth/hydra/consent"
-  public_host          = "hydra.${local.domain}"
+  host                 = "hydra.${local.domain}"
   namespace            = kubernetes_namespace.hydra_namespace.metadata.0.name
   salt                 = "1234567890123456789"
   tls_certificate_path = "secrets/hydra_selfsigned.crt"
   tls_key_path         = "secrets/hydra_selfsigned.key"
+
+  providers = {
+    helm       = "helm"
+    kubernetes = "kubernetes"
+    random     = "random"
+    template   = "template"
+  }
+}
+
+module "rocket-chat" {
+  source    = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=fc5434ebfea25af2996ab976ba7a5f75fa21da1c"
+  host      = "community.${local.domain}"
+  namespace = kubernetes_namespace.community_namespace.metadata.0.name
+
+  providers = {
+    helm = "helm"
+  }
 }
 
 #####################################################################
@@ -432,96 +449,5 @@ resource "kubernetes_namespace" "hydra_namespace" {
 resource "kubernetes_namespace" "ingress_nginx_namespace" {
   metadata {
     name = "ingress-nginx"
-  }
-}
-data "helm_repository" "stable" {
-  name = "stable"
-  url  = "https://kubernetes-charts.storage.googleapis.com/"
-}
-resource "helm_release" "rocket-chat_deployment" {
-  name       = "rocket-chat"
-  chart      = "stable/rocketchat"
-  repository = data.helm_repository.stable.metadata[0].name
-  namespace  = kubernetes_namespace.community_namespace.metadata.0.name
-
-
-  set {
-    name  = "image.tag"
-    value = "2.2.0"
-  }
-
-  set {
-    name  = "host"
-    value = "community.${local.domain}"
-  }
-
-  set {
-    name  = "replicaCount"
-    value = "1"
-  }
-
-  set {
-    name  = "minAvailable"
-    value = "1"
-  }
-
-  set {
-    name  = "mongodb.mongodbPassword"
-    value = "password"
-  }
-
-  set {
-    name  = "mongodb.mongodbRootPassword"
-    value = "password"
-  }
-
-  set {
-    name  = "mongodb.mongodbUsername"
-    value = "username"
-  }
-
-  set {
-    name  = "mongodb.mongodbDatabase"
-    value = "rocket-chat-db"
-  }
-
-  set {
-    name  = "mongodb.replicaSet.enabled"
-    value = "true"
-  }
-
-  set {
-    name  = "mongodb.replicaSet.replicas.secondary"
-    value = "1"
-  }
-
-  set {
-    name  = "mongodb.replicaSet.pdb.minAvailable.secondary"
-    value = "1"
-  }
-
-  set {
-    name  = "mongodb.replicaSet.replicas.arbiter"
-    value = "1"
-  }
-
-  set {
-    name  = "mongodb.replicaSet.pdb.minAvailable.arbiter"
-    value = "1"
-  }
-
-  set {
-    name  = "ingress.enabled"
-    value = "true"
-  }
-
-  set {
-    name  = "ingress.annotations.kubernetes\\.io/ingress\\.class"
-    value = "nginx"
-  }
-
-  set {
-    name  = "ingress.path"
-    value = "/"
   }
 }
