@@ -198,7 +198,7 @@ module "editor-renderer" {
 }
 
 module "varnish" {
-  source         = "github.com/serlo/infrastructure-modules-shared.git//varnish?ref=02e58fdcdf0c83d9f99d7e6ca5911768149755a5"
+  source         = "github.com/serlo/infrastructure-modules-shared.git//varnish?ref=339bb895e858277b4cb790b285a0004cc7d6450b"
   namespace      = kubernetes_namespace.athene2_namespace.metadata.0.name
   app_replicas   = 1
   image          = "eu.gcr.io/serlo-shared/varnish:6.0.2"
@@ -302,7 +302,7 @@ module "kpi" {
 }
 
 module "ingress-nginx" {
-  source               = "github.com/serlo/infrastructure-modules-shared.git//ingress-nginx?ref=5ce903f3b00082ac99b5a591914c3004d01fe7b2"
+  source               = "github.com/serlo/infrastructure-modules-shared.git//ingress-nginx?ref=339bb895e858277b4cb790b285a0004cc7d6450b"
   namespace            = kubernetes_namespace.ingress_nginx_namespace.metadata.0.name
   ip                   = module.gcloud.staticip_regional_address
   nginx_image          = "quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.24.1"
@@ -315,7 +315,7 @@ module "ingress-nginx" {
 }
 
 module "cloudflare" {
-  source  = "../infrastructure-modules-env-shared/cloudflare"
+  source  = "github.com/serlo/infrastructure-modules-env-shared.git//cloudflare?ref=36d906c2b2a665836714babc9cdd7d4c7a2b5143"
   domain  = local.domain
   ip      = module.gcloud.staticip_regional_address
   zone_id = "1064522c8625cd2973a8a61910106e01"
@@ -326,7 +326,7 @@ module "cloudflare" {
 }
 
 module "hydra" {
-  source               = "../infrastructure-modules-shared/hydra"
+  source               = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=339bb895e858277b4cb790b285a0004cc7d6450b"
   dsn                  = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
   url_login            = "https://de.${local.domain}/auth/hydra/login"
   url_consent          = "https://de.${local.domain}/auth/hydra/consent"
