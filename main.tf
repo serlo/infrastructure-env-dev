@@ -11,23 +11,24 @@ locals {
 
   cluster_machine_type = "n1-standard-2"
 
-  athene2_httpd_image               = "eu.gcr.io/serlo-shared/serlo-org-httpd:3.3.4"
-  athene2_php_image                 = "eu.gcr.io/serlo-shared/serlo-org-php:3.3.4"
+  serlo_org_images = {
+    server = {
+      httpd             = "eu.gcr.io/serlo-shared/serlo-org-httpd:3.3.4"
+      php               = "eu.gcr.io/serlo-shared/serlo-org-php:3.3.4"
+      notifications_job = "eu.gcr.io/serlo-shared/serlo-org-notifications-job:1.0.2"
+    }
+    editor_renderer        = "eu.gcr.io/serlo-shared/serlo-org-legacy-editor-renderer:1.0.0"
+    legacy_editor_renderer = "eu.gcr.io/serlo-shared/serlo-org-editor-renderer:2.0.9"
+    varnish                = "eu.gcr.io/serlo-shared/varnish:6.0"
+  }
+
   athene2_php_definitions-file_path = "secrets/athene2/definitions.dev.php"
 
-  athene2_notifications-job_image = "eu.gcr.io/serlo-shared/serlo-org-notifications-job:1.0.2"
-
   athene2_database_instance_name = "${local.project}-mysql-instance-23072019-2"
-
-  legacy-editor-renderer_image = "eu.gcr.io/serlo-shared/serlo-org-legacy-editor-renderer:1.0.0"
-  editor-renderer_image        = "eu.gcr.io/serlo-shared/serlo-org-editor-renderer:2.0.9"
-
-  kpi_database_instance_name = "${local.project}-postgres-instance-23072019-1"
+  kpi_database_instance_name     = "${local.project}-postgres-instance-23072019-1"
 
   ingress_tls_certificate_path = "secrets/serlo_dev_selfsigned.crt"
   ingress_tls_key_path         = "secrets/serlo_dev_selfsigned.key"
-
-  athene2_namespace = "athene2"
 }
 
 #####################################################################
@@ -145,6 +146,67 @@ module "gcloud_postgres" {
   }
 }
 
+module "serlo_org" {
+  source = "github.com/serlo/infrastructure-modules-serlo.org.git//?ref=3c22beaf999d156fb5083c6a0909a680955cb0f1"
+
+  namespace         = kubernetes_namespace.serlo_org_namespace.metadata.0.name
+  image_pull_policy = "IfNotPresent"
+
+  server = {
+    app_replicas = 1
+    images       = local.serlo_org_images.server
+
+    domain                = local.domain
+    definitions_file_path = local.athene2_php_definitions-file_path
+
+    recaptcha = {
+      key    = var.athene2_php_recaptcha_key
+      secret = var.athene2_php_recaptcha_secret
+    }
+
+    smtp_password = var.athene2_php_smtp_password
+    mailchimp_key = var.athene2_php_newsletter_key
+
+    enable_tracking = var.athene2_php_tracking_switch
+
+    database = {
+      host     = module.gcloud_mysql.database_private_ip_address
+      username = "serlo"
+      password = var.athene2_database_password_default
+    }
+
+    database_readonly = {
+      username = "serlo_readonly"
+      password = var.athene2_database_password_readonly
+    }
+
+    upload_secret   = file("secrets/serlo-org-6bab84a1b1a5.json")
+    hydra_admin_uri = module.hydra.admin_uri
+    feature_flags   = "['donation-banner' => true]"
+  }
+
+  editor_renderer = {
+    app_replicas = 1
+    image        = local.serlo_org_images.editor_renderer
+  }
+
+  legacy_editor_renderer = {
+    app_replicas = 1
+    image        = local.serlo_org_images.legacy_editor_renderer
+  }
+
+  varnish = {
+    app_replicas = 1
+    image        = local.serlo_org_images.varnish
+  }
+
+  providers = {
+    kubernetes = "kubernetes"
+    random     = "random"
+    template   = "template"
+  }
+}
+
 module "gcloud_dbdump_reader" {
   source = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_dbdump_reader?ref=master"
 
@@ -155,7 +217,7 @@ module "gcloud_dbdump_reader" {
 
 module "athene2_dbsetup" {
   source                      = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_dbsetup?ref=089269eaccfa66c65362fe92d014303c39f4449d"
-  namespace                   = kubernetes_namespace.athene2_namespace.metadata.0.name
+  namespace                   = kubernetes_namespace.serlo_org_namespace.metadata.0.name
   database_password_default   = var.athene2_database_password_default
   database_host               = module.gcloud_mysql.database_private_ip_address
   gcloud_service_account_key  = module.gcloud_dbdump_reader.account_key
@@ -173,102 +235,6 @@ module "athene2_metrics" {
   providers = {
     google = "google"
   }
-}
-
-module "legacy-editor-renderer" {
-  source       = "github.com/serlo/infrastructure-modules-serlo.org.git//legacy-editor-renderer?ref=089269eaccfa66c65362fe92d014303c39f4449d"
-  image        = local.legacy-editor-renderer_image
-  namespace    = kubernetes_namespace.athene2_namespace.metadata.0.name
-  app_replicas = 1
-
-  providers = {
-    kubernetes = "kubernetes"
-  }
-}
-
-module "editor-renderer" {
-  source       = "github.com/serlo/infrastructure-modules-serlo.org.git//editor-renderer?ref=089269eaccfa66c65362fe92d014303c39f4449d"
-  image        = local.editor-renderer_image
-  namespace    = kubernetes_namespace.athene2_namespace.metadata.0.name
-  app_replicas = 1
-
-  providers = {
-    kubernetes = "kubernetes"
-  }
-}
-
-module "varnish" {
-  source         = "github.com/serlo/infrastructure-modules-shared.git//varnish?ref=339bb895e858277b4cb790b285a0004cc7d6450b"
-  namespace      = kubernetes_namespace.athene2_namespace.metadata.0.name
-  app_replicas   = 1
-  image          = "eu.gcr.io/serlo-shared/varnish:6.0.2"
-  varnish_memory = "100M"
-  backend_ip     = module.athene2.service_name
-
-  resources_limits_cpu      = "50m"
-  resources_limits_memory   = "100Mi"
-  resources_requests_cpu    = "50m"
-  resources_requests_memory = "100Mi"
-
-  providers = {
-    kubernetes = "kubernetes"
-    template   = "template"
-  }
-}
-
-module "athene2" {
-  source = "github.com/serlo/infrastructure-modules-serlo.org.git//server?ref=85ebee63c7c503b0006a9d18642360a0cc4817fd"
-
-  php_definitions-file_path = local.athene2_php_definitions-file_path
-  php_recaptcha_key         = var.athene2_php_recaptcha_key
-  php_recaptcha_secret      = var.athene2_php_recaptcha_secret
-  php_smtp_password         = var.athene2_php_smtp_password
-  php_newsletter_key        = var.athene2_php_newsletter_key
-  php_tracking_switch       = var.athene2_php_tracking_switch
-
-  database_username_default  = "serlo"
-  database_username_readonly = "serlo_readonly"
-  database_password_default  = var.athene2_database_password_default
-  database_password_readonly = var.athene2_database_password_readonly
-  database_private_ip        = module.gcloud_mysql.database_private_ip_address
-
-  app_replicas = 1
-
-  httpd_container_limits_cpu      = "200m"
-  httpd_container_limits_memory   = "200Mi"
-  httpd_container_requests_cpu    = "100m"
-  httpd_container_requests_memory = "100Mi"
-
-  php_container_limits_cpu      = "700m"
-  php_container_limits_memory   = "600Mi"
-  php_container_requests_cpu    = "400m"
-  php_container_requests_memory = "200Mi"
-
-  domain = local.domain
-
-  upload_secret = file("secrets/serlo-org-6bab84a1b1a5.json")
-
-  legacy_editor_renderer_uri = module.legacy-editor-renderer.service_uri
-  editor_renderer_uri        = module.editor-renderer.service_uri
-  hydra_uri                  = module.hydra.admin_uri
-
-  enable_basic_auth = true
-  enable_cronjobs   = true
-  enable_mail_mock  = true
-
-  providers = {
-    kubernetes = "kubernetes"
-    random     = "random"
-    template   = "template"
-  }
-  feature_flags     = "[]"
-  image_pull_policy = "Always"
-  images = {
-    httpd             = local.athene2_httpd_image
-    php               = local.athene2_php_image
-    notifications_job = local.athene2_notifications-job_image
-  }
-  namespace = kubernetes_namespace.athene2_namespace.metadata.0.name
 }
 
 module "kpi_metrics" {
@@ -389,9 +355,10 @@ resource "kubernetes_ingress" "kpi_ingress" {
 resource "kubernetes_ingress" "athene2_ingress" {
   metadata {
     name      = "athene2-ingress"
-    namespace = kubernetes_namespace.athene2_namespace.metadata.0.name
+    namespace = kubernetes_namespace.serlo_org_namespace.metadata.0.name
 
-    annotations = { "kubernetes.io/ingress.class" = "nginx",
+    annotations = {
+      "kubernetes.io/ingress.class"             = "nginx",
       "nginx.ingress.kubernetes.io/auth-type"   = "basic",
       "nginx.ingress.kubernetes.io/auth-secret" = "basic-auth-ingress-secret",
       "nginx.ingress.kubernetes.io/auth-realm"  = "Authentication Required"
@@ -401,8 +368,8 @@ resource "kubernetes_ingress" "athene2_ingress" {
 
   spec {
     backend {
-      service_name = module.varnish.service_name
-      service_port = module.varnish.service_port
+      service_name = module.serlo_org.service_name
+      service_port = module.serlo_org.service_port
     }
   }
 }
@@ -411,7 +378,7 @@ resource "kubernetes_secret" "basic_auth_ingress_secret" {
 
   metadata {
     name      = "basic-auth-ingress-secret"
-    namespace = kubernetes_namespace.athene2_namespace.metadata.0.name
+    namespace = kubernetes_namespace.serlo_org_namespace.metadata.0.name
   }
 
   data = {
@@ -423,9 +390,9 @@ resource "kubernetes_secret" "basic_auth_ingress_secret" {
 #####################################################################
 # namespaces
 #####################################################################
-resource "kubernetes_namespace" "athene2_namespace" {
+resource "kubernetes_namespace" "serlo_org_namespace" {
   metadata {
-    name = local.athene2_namespace
+    name = "serlo-org"
   }
 }
 
