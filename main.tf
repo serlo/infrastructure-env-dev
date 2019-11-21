@@ -326,7 +326,7 @@ module "cloudflare" {
 }
 
 module "hydra" {
-  source               = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=4fdcdc5eebb28b791186f9a35fa5669b25491726"
+  source               = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=e5a8062a0c441c3dede1160725b8edf77c0d7e29"
   dsn                  = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
   url_login            = "https://de.${local.domain}/auth/hydra/login"
   url_consent          = "https://de.${local.domain}/auth/hydra/consent"
@@ -344,7 +344,7 @@ module "hydra" {
 }
 
 module "rocket-chat" {
-  source    = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=4fdcdc5eebb28b791186f9a35fa5669b25491726"
+  source    = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=e5a8062a0c441c3dede1160725b8edf77c0d7e29"
   host      = "community.${local.domain}"
   namespace = kubernetes_namespace.community_namespace.metadata.0.name
   image_tag = "2.2.1"
