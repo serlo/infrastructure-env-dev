@@ -11,8 +11,8 @@ locals {
 
   cluster_machine_type = "n1-standard-2"
 
-  athene2_httpd_image               = "eu.gcr.io/serlo-shared/serlo-org-httpd:3.3.2"
-  athene2_php_image                 = "eu.gcr.io/serlo-shared/serlo-org-php:3.3.2"
+  athene2_httpd_image               = "eu.gcr.io/serlo-shared/serlo-org-httpd:3.3.3"
+  athene2_php_image                 = "eu.gcr.io/serlo-shared/serlo-org-php:3.3.3"
   athene2_php_definitions-file_path = "secrets/athene2/definitions.dev.php"
 
   athene2_notifications-job_image = "eu.gcr.io/serlo-shared/serlo-org-notifications-job:1.0.2"
