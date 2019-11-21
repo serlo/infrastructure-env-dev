@@ -326,13 +326,12 @@ module "cloudflare" {
 }
 
 module "hydra" {
-  source               = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=fc5434ebfea25af2996ab976ba7a5f75fa21da1c"
+  source               = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=4fdcdc5eebb28b791186f9a35fa5669b25491726"
   dsn                  = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
   url_login            = "https://de.${local.domain}/auth/hydra/login"
   url_consent          = "https://de.${local.domain}/auth/hydra/consent"
   host                 = "hydra.${local.domain}"
   namespace            = kubernetes_namespace.hydra_namespace.metadata.0.name
-  salt                 = "1234567890123456789"
   tls_certificate_path = "secrets/hydra_selfsigned.crt"
   tls_key_path         = "secrets/hydra_selfsigned.key"
 
@@ -345,12 +344,14 @@ module "hydra" {
 }
 
 module "rocket-chat" {
-  source    = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=fc5434ebfea25af2996ab976ba7a5f75fa21da1c"
+  source    = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=4fdcdc5eebb28b791186f9a35fa5669b25491726"
   host      = "community.${local.domain}"
   namespace = kubernetes_namespace.community_namespace.metadata.0.name
+  image_tag = "2.2.1"
 
   providers = {
-    helm = "helm"
+    helm   = "helm"
+    random = "random"
   }
 }
 
