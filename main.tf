@@ -310,7 +310,7 @@ module "hydra" {
 }
 
 module "rocket-chat" {
-  source    = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=03667a543b808ae4c7133a0e2bc85f96dbdc901e"
+  source    = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=261f5f6c618fe70d97f64bce038e2d3975607c3f"
   host      = "community.${local.domain}"
   namespace = kubernetes_namespace.community_namespace.metadata.0.name
   image_tag = "2.2.1"
