@@ -310,7 +310,8 @@ module "hydra" {
 }
 
 module "rocket-chat" {
-  source    = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=261f5f6c618fe70d97f64bce038e2d3975607c3f"
+  source = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=603e5f01190f19ab47f1fa13f40f4e053b962c1e"
+
   host      = "community.${local.domain}"
   namespace = kubernetes_namespace.community_namespace.metadata.0.name
   image_tag = "2.2.1"
@@ -320,6 +321,8 @@ module "rocket-chat" {
     schedule      = "0 0 * * *"
     bucket_prefix = local.project
   }
+
+  smtp_password = var.athene2_php_smtp_password
 
   providers = {
     google   = "google"
