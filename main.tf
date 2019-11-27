@@ -310,14 +310,22 @@ module "hydra" {
 }
 
 module "rocket-chat" {
-  source    = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=e5a8062a0c441c3dede1160725b8edf77c0d7e29"
+  source    = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=03667a543b808ae4c7133a0e2bc85f96dbdc901e"
   host      = "community.${local.domain}"
   namespace = kubernetes_namespace.community_namespace.metadata.0.name
   image_tag = "2.2.1"
 
+  mongodump = {
+    image         = "eu.gcr.io/serlo-shared/mongodb-tools-base:1.0.1"
+    schedule      = "0 0 * * *"
+    bucket_prefix = local.project
+  }
+
   providers = {
-    helm   = "helm"
-    random = "random"
+    google   = "google"
+    helm     = "helm"
+    random   = "random"
+    template = "template"
   }
 }
 
