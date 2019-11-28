@@ -13,8 +13,8 @@ locals {
 
   serlo_org_images = {
     server = {
-      httpd             = "eu.gcr.io/serlo-shared/serlo-org-httpd:3.3.4"
-      php               = "eu.gcr.io/serlo-shared/serlo-org-php:3.3.4"
+      httpd             = "eu.gcr.io/serlo-shared/serlo-org-httpd:3.5.1"
+      php               = "eu.gcr.io/serlo-shared/serlo-org-php:3.5.1"
       notifications_job = "eu.gcr.io/serlo-shared/serlo-org-notifications-job:1.0.2"
     }
     editor_renderer        = "eu.gcr.io/serlo-shared/serlo-org-legacy-editor-renderer:1.0.0"
@@ -84,6 +84,10 @@ provider "random" {
 }
 
 provider "template" {
+  version = "~> 2.1"
+}
+
+provider "tls" {
   version = "~> 2.1"
 }
 
@@ -268,15 +272,15 @@ module "kpi" {
 }
 
 module "ingress-nginx" {
-  source               = "github.com/serlo/infrastructure-modules-shared.git//ingress-nginx?ref=339bb895e858277b4cb790b285a0004cc7d6450b"
-  namespace            = kubernetes_namespace.ingress_nginx_namespace.metadata.0.name
-  ip                   = module.gcloud.staticip_regional_address
-  nginx_image          = "quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.24.1"
-  tls_certificate_path = local.ingress_tls_certificate_path
-  tls_key_path         = local.ingress_tls_key_path
+  source      = "github.com/serlo/infrastructure-modules-shared.git//ingress-nginx?ref=51ec5b16d2d39171c88cf033ba3f7dcef22a0e9b"
+  namespace   = kubernetes_namespace.ingress_nginx_namespace.metadata.0.name
+  ip          = module.gcloud.staticip_regional_address
+  domain      = "*.${local.domain}"
+  nginx_image = "quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.24.1"
 
   providers = {
     kubernetes = "kubernetes"
+    tls        = "tls"
   }
 }
 
@@ -292,20 +296,19 @@ module "cloudflare" {
 }
 
 module "hydra" {
-  source               = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=e5a8062a0c441c3dede1160725b8edf77c0d7e29"
-  dsn                  = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
-  url_login            = "https://de.${local.domain}/auth/hydra/login"
-  url_consent          = "https://de.${local.domain}/auth/hydra/consent"
-  host                 = "hydra.${local.domain}"
-  namespace            = kubernetes_namespace.hydra_namespace.metadata.0.name
-  tls_certificate_path = "secrets/hydra_selfsigned.crt"
-  tls_key_path         = "secrets/hydra_selfsigned.key"
+  source      = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=51ec5b16d2d39171c88cf033ba3f7dcef22a0e9b"
+  dsn         = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
+  url_login   = "https://de.${local.domain}/auth/hydra/login"
+  url_consent = "https://de.${local.domain}/auth/hydra/consent"
+  host        = "hydra.${local.domain}"
+  namespace   = kubernetes_namespace.hydra_namespace.metadata.0.name
 
   providers = {
     helm       = "helm"
     kubernetes = "kubernetes"
     random     = "random"
     template   = "template"
+    tls        = "tls"
   }
 }
 
