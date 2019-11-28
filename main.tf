@@ -26,9 +26,6 @@ locals {
 
   athene2_database_instance_name = "${local.project}-mysql-instance-23072019-2"
   kpi_database_instance_name     = "${local.project}-postgres-instance-23072019-1"
-
-  ingress_tls_certificate_path = "secrets/serlo_dev_selfsigned.crt"
-  ingress_tls_key_path         = "secrets/serlo_dev_selfsigned.key"
 }
 
 #####################################################################
