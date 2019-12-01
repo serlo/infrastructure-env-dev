@@ -11,16 +11,17 @@ locals {
 
   cluster_machine_type = "n1-standard-2"
 
-  serlo_org_images = {
+  serlo_org_image_tags = {
     server = {
-      httpd             = "eu.gcr.io/serlo-shared/serlo-org-httpd:3.5.3"
-      php               = "eu.gcr.io/serlo-shared/serlo-org-php:3.5.3"
-      notifications_job = "eu.gcr.io/serlo-shared/serlo-org-notifications-job:1.0.2"
+      httpd             = "4.0.0"
+      php               = "4.0.0"
+      notifications_job = "1.0.2"
     }
-    editor_renderer        = "eu.gcr.io/serlo-shared/serlo-org-editor-renderer:2.0.9"
-    legacy_editor_renderer = "eu.gcr.io/serlo-shared/serlo-org-legacy-editor-renderer:1.0.0"
-    varnish                = "eu.gcr.io/serlo-shared/varnish:6.0"
+    editor_renderer        = "2.0.9"
+    legacy_editor_renderer = "1.0.0"
+    frontend               = "0.1.1"
   }
+  varnish_image = "eu.gcr.io/serlo-shared/varnish:6.0"
 
   athene2_php_definitions-file_path = "secrets/athene2/definitions.dev.php"
 
@@ -103,8 +104,8 @@ module "gcloud" {
   monitoring_service       = "monitoring.googleapis.com/kubernetes"
 
   providers = {
-    google      = "google"
-    google-beta = "google-beta"
+    google      = google
+    google-beta = google-beta
   }
 }
 
@@ -121,8 +122,8 @@ module "gcloud_mysql" {
   database_password_readonly = var.athene2_database_password_readonly
 
   providers = {
-    google      = "google"
-    google-beta = "google-beta"
+    google      = google
+    google-beta = google-beta
   }
 }
 
@@ -142,20 +143,20 @@ module "gcloud_postgres" {
   database_password_readonly = var.kpi_kpi_database_password_readonly
 
   providers = {
-    google      = "google"
-    google-beta = "google-beta"
+    google      = google
+    google-beta = google-beta
   }
 }
 
 module "serlo_org" {
-  source = "github.com/serlo/infrastructure-modules-serlo.org.git//?ref=3dcd8f2f62ea316aa25c4938e1577bf923cf6d71"
+  source = "github.com/serlo/infrastructure-modules-serlo.org.git//?ref=642e591ea6556cedfc42281157a85e4c860dfdac"
 
   namespace         = kubernetes_namespace.serlo_org_namespace.metadata.0.name
   image_pull_policy = "IfNotPresent"
 
   server = {
     app_replicas = 1
-    images       = local.serlo_org_images.server
+    image_tags   = local.serlo_org_image_tags.server
 
     domain                = local.domain
     definitions_file_path = local.athene2_php_definitions-file_path
@@ -209,29 +210,34 @@ module "serlo_org" {
 
     upload_secret   = file("secrets/serlo-org-6bab84a1b1a5.json")
     hydra_admin_uri = module.hydra.admin_uri
-    feature_flags   = "['donation-banner' => true]"
+    feature_flags   = "['donation-banner' => true, 'redesign' => true]"
   }
 
   editor_renderer = {
     app_replicas = 1
-    image        = local.serlo_org_images.editor_renderer
+    image_tag    = local.serlo_org_image_tags.editor_renderer
   }
 
   legacy_editor_renderer = {
     app_replicas = 1
-    image        = local.serlo_org_images.legacy_editor_renderer
+    image_tag    = local.serlo_org_image_tags.legacy_editor_renderer
+  }
+
+  frontend = {
+    app_replicas = 1
+    image_tag    = local.serlo_org_image_tags.frontend
   }
 
   varnish = {
     app_replicas = 1
-    image        = local.serlo_org_images.varnish
+    image        = local.varnish_image
     memory       = "100M"
   }
 
   providers = {
-    kubernetes = "kubernetes"
-    random     = "random"
-    template   = "template"
+    kubernetes = kubernetes
+    random     = random
+    template   = template
   }
 }
 
@@ -239,7 +245,7 @@ module "gcloud_dbdump_reader" {
   source = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_dbdump_reader?ref=master"
 
   providers = {
-    google = "google"
+    google = google
   }
 }
 
@@ -252,8 +258,8 @@ module "athene2_dbsetup" {
   gcloud_service_account_name = module.gcloud_dbdump_reader.account_name
 
   providers = {
-    null       = "null"
-    kubernetes = "kubernetes"
+    null       = null
+    kubernetes = kubernetes
   }
 }
 
@@ -261,14 +267,14 @@ module "athene2_metrics" {
   source = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_metrics?ref=089269eaccfa66c65362fe92d014303c39f4449d"
 
   providers = {
-    google = "google"
+    google = google
   }
 }
 
 module "kpi_metrics" {
   source = "github.com/serlo/infrastructure-modules-kpi.git//kpi_metrics?ref=master"
   providers = {
-    google = "google"
+    google = google
   }
 }
 
@@ -291,7 +297,7 @@ module "kpi" {
   aggregator_image     = "eu.gcr.io/serlo-shared/kpi-aggregator:1.3.2"
 
   providers = {
-    kubernetes = "kubernetes"
+    kubernetes = kubernetes
   }
 }
 
@@ -303,8 +309,8 @@ module "ingress-nginx" {
   nginx_image = "quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.24.1"
 
   providers = {
-    kubernetes = "kubernetes"
-    tls        = "tls"
+    kubernetes = kubernetes
+    tls        = tls
   }
 }
 
@@ -315,7 +321,7 @@ module "cloudflare" {
   zone_id = "1064522c8625cd2973a8a61910106e01"
 
   providers = {
-    cloudflare = "cloudflare"
+    cloudflare = cloudflare
   }
 }
 
@@ -328,11 +334,11 @@ module "hydra" {
   namespace   = kubernetes_namespace.hydra_namespace.metadata.0.name
 
   providers = {
-    helm       = "helm"
-    kubernetes = "kubernetes"
-    random     = "random"
-    template   = "template"
-    tls        = "tls"
+    helm       = helm
+    kubernetes = kubernetes
+    random     = random
+    template   = template
+    tls        = tls
   }
 }
 
@@ -352,10 +358,10 @@ module "rocket-chat" {
   smtp_password = var.athene2_php_smtp_password
 
   providers = {
-    google   = "google"
-    helm     = "helm"
-    random   = "random"
-    template = "template"
+    google   = google
+    helm     = helm
+    random   = random
+    template = template
   }
 }
 
