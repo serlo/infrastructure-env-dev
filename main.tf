@@ -13,13 +13,13 @@ locals {
 
   serlo_org_image_tags = {
     server = {
-      httpd             = "4.0.0"
-      php               = "4.0.0"
+      httpd             = "4.2.1"
+      php               = "4.2.1"
       notifications_job = "1.0.2"
     }
     editor_renderer        = "2.0.9"
     legacy_editor_renderer = "1.0.0"
-    frontend               = "0.1.1"
+    frontend               = "0.1.4"
   }
   varnish_image = "eu.gcr.io/serlo-shared/varnish:6.0"
 
@@ -302,7 +302,7 @@ module "kpi" {
 }
 
 module "ingress-nginx" {
-  source      = "github.com/serlo/infrastructure-modules-shared.git//ingress-nginx?ref=51ec5b16d2d39171c88cf033ba3f7dcef22a0e9b"
+  source      = "github.com/serlo/infrastructure-modules-shared.git//ingress-nginx?ref=86fa9688de6dbde14799c484ca5de655df51c12d"
   namespace   = kubernetes_namespace.ingress_nginx_namespace.metadata.0.name
   ip          = module.gcloud.staticip_regional_address
   domain      = "*.${local.domain}"
@@ -326,7 +326,7 @@ module "cloudflare" {
 }
 
 module "hydra" {
-  source      = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=51ec5b16d2d39171c88cf033ba3f7dcef22a0e9b"
+  source      = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=86fa9688de6dbde14799c484ca5de655df51c12d"
   dsn         = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
   url_login   = "https://de.${local.domain}/auth/hydra/login"
   url_consent = "https://de.${local.domain}/auth/hydra/consent"
@@ -343,7 +343,7 @@ module "hydra" {
 }
 
 module "rocket-chat" {
-  source = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=603e5f01190f19ab47f1fa13f40f4e053b962c1e"
+  source = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=86fa9688de6dbde14799c484ca5de655df51c12d"
 
   host      = "community.${local.domain}"
   namespace = kubernetes_namespace.community_namespace.metadata.0.name
