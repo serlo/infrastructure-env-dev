@@ -149,7 +149,7 @@ module "gcloud_postgres" {
 }
 
 module "serlo_org" {
-  source = "github.com/serlo/infrastructure-modules-serlo.org.git//?ref=642e591ea6556cedfc42281157a85e4c860dfdac"
+  source = "github.com/serlo/infrastructure-modules-serlo.org.git//?ref=9fe0c43443d40c74b1d11fa98da8a64a28ed1003"
 
   namespace         = kubernetes_namespace.serlo_org_namespace.metadata.0.name
   image_pull_policy = "IfNotPresent"
@@ -250,7 +250,7 @@ module "gcloud_dbdump_reader" {
 }
 
 module "athene2_dbsetup" {
-  source                      = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_dbsetup?ref=089269eaccfa66c65362fe92d014303c39f4449d"
+  source                      = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_dbsetup?ref=9fe0c43443d40c74b1d11fa98da8a64a28ed1003"
   namespace                   = kubernetes_namespace.serlo_org_namespace.metadata.0.name
   database_password_default   = var.athene2_database_password_default
   database_host               = module.gcloud_mysql.database_private_ip_address
@@ -264,7 +264,7 @@ module "athene2_dbsetup" {
 }
 
 module "athene2_metrics" {
-  source = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_metrics?ref=089269eaccfa66c65362fe92d014303c39f4449d"
+  source = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_metrics?ref=9fe0c43443d40c74b1d11fa98da8a64a28ed1003"
 
   providers = {
     google = google
