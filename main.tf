@@ -93,7 +93,7 @@ provider "tls" {
 # modules
 #####################################################################
 module "gcloud" {
-  source                   = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud?ref=15666ddbd5b93c74c28781fec90a7b03b99b6377"
+  source                   = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud?ref=193c415dc00b0a40e1790ad224864d3df6cfba3e"
   project                  = local.project
   clustername              = "${local.project}-cluster"
   location                 = "europe-west3-a"
@@ -106,11 +106,12 @@ module "gcloud" {
   providers = {
     google      = google
     google-beta = google-beta
+    kubernetes  = kubernetes
   }
 }
 
 module "gcloud_mysql" {
-  source                     = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_mysql?ref=15666ddbd5b93c74c28781fec90a7b03b99b6377"
+  source                     = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_mysql?ref=193c415dc00b0a40e1790ad224864d3df6cfba3e"
   database_instance_name     = local.athene2_database_instance_name
   database_connection_name   = "${local.project}:${local.region}:${local.athene2_database_instance_name}"
   database_region            = local.region
@@ -128,7 +129,7 @@ module "gcloud_mysql" {
 }
 
 module "gcloud_postgres" {
-  source                   = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_postgres?ref=4834fc2bb1d4de1f89d06ecc6060d0e35da10b8e"
+  source                   = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_postgres?ref=193c415dc00b0a40e1790ad224864d3df6cfba3e"
   database_instance_name   = local.kpi_database_instance_name
   database_connection_name = "${local.project}:${local.region}:${local.kpi_database_instance_name}"
   database_region          = local.region
@@ -242,7 +243,7 @@ module "serlo_org" {
 }
 
 module "gcloud_dbdump_reader" {
-  source = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_dbdump_reader?ref=master"
+  source = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud_dbdump_reader?ref=193c415dc00b0a40e1790ad224864d3df6cfba3e"
 
   providers = {
     google = google
@@ -315,7 +316,7 @@ module "ingress-nginx" {
 }
 
 module "cloudflare" {
-  source  = "github.com/serlo/infrastructure-modules-env-shared.git//cloudflare?ref=36d906c2b2a665836714babc9cdd7d4c7a2b5143"
+  source  = "github.com/serlo/infrastructure-modules-env-shared.git//cloudflare?ref=5175dfff7cc6a52d85cc66ae8c690c67f5539200"
   domain  = local.domain
   ip      = module.gcloud.staticip_regional_address
   zone_id = "1064522c8625cd2973a8a61910106e01"
