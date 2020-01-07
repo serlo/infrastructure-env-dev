@@ -15,7 +15,7 @@ locals {
     server = {
       httpd             = "5.0.0"
       php               = "5.0.0"
-      notifications_job = "2.0.0"
+      notifications_job = "2.0.1"
     }
     editor_renderer        = "3.0.0"
     legacy_editor_renderer = "2.0.0"
@@ -360,10 +360,11 @@ module "rocket-chat" {
   smtp_password = var.athene2_php_smtp_password
 
   providers = {
-    google   = google
-    helm     = helm
-    random   = random
-    template = template
+    google     = google
+    helm       = helm
+    kubernetes = kubernetes
+    random     = random
+    template   = template
   }
 }
 
