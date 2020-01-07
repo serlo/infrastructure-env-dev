@@ -13,13 +13,13 @@ locals {
 
   serlo_org_image_tags = {
     server = {
-      httpd             = "5.1.0"
-      php               = "5.1.0"
+      httpd             = "5.1.1"
+      php               = "5.1.1"
       notifications_job = "2.0.1"
     }
     editor_renderer        = "4.0.0"
     legacy_editor_renderer = "2.0.0"
-    frontend               = "2.0.0"
+    frontend               = "2.0.1"
   }
   varnish_image = "eu.gcr.io/serlo-shared/varnish:6.0"
 
@@ -348,6 +348,10 @@ module "redis" {
   source    = "github.com/serlo/infrastructure-modules-shared.git//redis?ref=c331726b68a536449f88960458c6cb4297d6be46"
   namespace = kubernetes_namespace.redis_namespace.metadata.0.name
   image_tag = "5.0.7-debian-9-r12"
+
+  providers = {
+    helm = helm
+  }
 }
 
 #module "rocket-chat" {
