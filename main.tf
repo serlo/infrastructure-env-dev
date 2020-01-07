@@ -211,8 +211,8 @@ module "serlo_org" {
 
     upload_secret   = file("secrets/serlo-org-6bab84a1b1a5.json")
     hydra_admin_uri = module.hydra.admin_uri
-    feature_flags   = "['donation-banner' => true, 'frontend-footer' => true]"
-    redis_hosts     = "[]"
+    feature_flags   = "['client-frontend' => true, 'frontend-content' => true, 'frontend-diff' => true, 'frontend-donation-banner' => true, 'frontend-editor' => true, 'frontend-footer' => true, 'frontend-legacy-content' => true, 'key-value-store' => true]"
+    redis_hosts     = "['redis-master.redis']"
   }
 
   editor_renderer = {
@@ -304,7 +304,7 @@ module "kpi" {
 }
 
 module "ingress-nginx" {
-  source      = "github.com/serlo/infrastructure-modules-shared.git//ingress-nginx?ref=86fa9688de6dbde14799c484ca5de655df51c12d"
+  source      = "github.com/serlo/infrastructure-modules-shared.git//ingress-nginx?ref=c331726b68a536449f88960458c6cb4297d6be46"
   namespace   = kubernetes_namespace.ingress_nginx_namespace.metadata.0.name
   ip          = module.gcloud.staticip_regional_address
   domain      = "*.${local.domain}"
@@ -328,7 +328,7 @@ module "cloudflare" {
 }
 
 module "hydra" {
-  source      = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=86fa9688de6dbde14799c484ca5de655df51c12d"
+  source      = "github.com/serlo/infrastructure-modules-shared.git//hydra?ref=c331726b68a536449f88960458c6cb4297d6be46"
   dsn         = "postgres://${module.kpi.kpi_database_username_default}:${var.kpi_kpi_database_password_default}@${module.gcloud_postgres.database_private_ip_address}/hydra"
   url_login   = "https://de.${local.domain}/auth/hydra/login"
   url_consent = "https://de.${local.domain}/auth/hydra/consent"
@@ -344,8 +344,14 @@ module "hydra" {
   }
 }
 
+module "redis" {
+  source    = "github.com/serlo/infrastructure-modules-shared.git//redis?ref=c331726b68a536449f88960458c6cb4297d6be46"
+  namespace = kubernetes_namespace.redis_namespace.metadata.0.name
+  image_tag = "5.0.7-debian-9-r12"
+}
+
 #module "rocket-chat" {
-#  source = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=86fa9688de6dbde14799c484ca5de655df51c12d"
+#  source = "github.com/serlo/infrastructure-modules-shared.git//rocket-chat?ref=c331726b68a536449f88960458c6cb4297d6be46"
 #
 #  host      = "community.${local.domain}"
 #  namespace = kubernetes_namespace.community_namespace.metadata.0.name
@@ -464,5 +470,11 @@ resource "kubernetes_namespace" "hydra_namespace" {
 resource "kubernetes_namespace" "ingress_nginx_namespace" {
   metadata {
     name = "ingress-nginx"
+  }
+}
+
+resource "kubernetes_namespace" "redis_namespace" {
+  metadata {
+    name = "redis"
   }
 }
