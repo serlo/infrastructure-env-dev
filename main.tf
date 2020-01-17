@@ -93,7 +93,7 @@ provider "tls" {
 # modules
 #####################################################################
 module "gcloud" {
-  source                   = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud?ref=193c415dc00b0a40e1790ad224864d3df6cfba3e"
+  source                   = "github.com/serlo/infrastructure-modules-gcloud.git//gcloud?ref=f4ae4fb68c10c6cf1e446e64a71ade325caf648c"
   project                  = local.project
   clustername              = "${local.project}-cluster"
   location                 = "europe-west3-a"
