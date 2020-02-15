@@ -6,9 +6,9 @@ locals {
         php               = "7.1.1"
         notifications_job = "2.1.0"
       }
-      editor_renderer        = "6.2.1"
+      editor_renderer        = "6.2.2"
       legacy_editor_renderer = "2.1.0"
-      frontend               = "4.2.1"
+      frontend               = "4.2.2"
     }
     varnish_image                     = "eu.gcr.io/serlo-shared/varnish:6.0"
     athene2_php_definitions-file_path = "secrets/athene2/definitions.dev.php"
