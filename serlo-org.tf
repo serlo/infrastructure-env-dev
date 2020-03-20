@@ -15,7 +15,7 @@ locals {
   }
 }
 module "serlo_org" {
-  source = "github.com/serlo/infrastructure-modules-serlo.org.git//?ref=362e9ac3aaa1aa12315bd032dc54b08ed00344ef"
+  source = "github.com/serlo/infrastructure-modules-serlo.org.git//?ref=2a6dd4a18340d8399fd2896855f458ecc1080e09"
 
   namespace         = kubernetes_namespace.serlo_org_namespace.metadata.0.name
   image_pull_policy = "IfNotPresent"
@@ -96,7 +96,7 @@ module "serlo_org" {
 }
 
 module "serlo_org_metrics" {
-  source = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_metrics?ref=362e9ac3aaa1aa12315bd032dc54b08ed00344ef"
+  source = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_metrics?ref=2a6dd4a18340d8399fd2896855f458ecc1080e09"
 }
 
 resource "kubernetes_ingress" "athene2_ingress" {
