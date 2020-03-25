@@ -53,3 +53,18 @@ variable "athene2_php_recaptcha_secret" {
 variable "athene2_php_newsletter_key" {
   description = "Key for newsletter"
 }
+
+variable "api_cache_account" {
+  description = "Cloudflare account for API cache"
+  type        = string
+}
+
+variable "api_cache_namespace" {
+  description = "Cloudflare Worker KV namespace for API cache"
+  type        = string
+}
+
+variable "api_cache_token" {
+  description = "Cloudflare API token for API cache"
+  type        = string
+}
