@@ -5,7 +5,7 @@ locals {
 }
 
 module "matomo" {
-  source = "github.com/serlo/infrastructure-modules-shared//matomo?ref=e437225079eca76bfe52a200a2f7a1590744ef59"
+  source = "github.com/serlo/infrastructure-modules-shared//matomo?ref=a8994fea027b64cfadcdb10e3ab6fa50bef5933d"
 
   app_replicas  = 1
   image_tag     = local.matomo.matomo_image_tag
@@ -13,8 +13,9 @@ module "matomo" {
   database_host = module.gcloud_mysql.database_private_ip_address
   database_user = "serlo"
   #var.matomo_mysql_password
-  database_password = var.athene2_database_password_default
-  database_name     = "matomo"
+  database_password    = var.athene2_database_password_default
+  database_name        = "matomo"
+  persistent_disk_name = "matomo-storage-${local.project}"
 }
 
 resource "kubernetes_namespace" "matomo_namespace" {
