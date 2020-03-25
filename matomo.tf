@@ -1,11 +1,11 @@
 locals {
   matomo = {
-    matomo_image_tag = "3.13.3"
+    matomo_image_tag = "3.13.4"
   }
 }
 
 module "matomo" {
-  source = "github.com/serlo/infrastructure-modules-shared//matomo?ref=a8994fea027b64cfadcdb10e3ab6fa50bef5933d"
+  source = "github.com/serlo/infrastructure-modules-shared//matomo?ref=db7232c2d87e3962293280119a507eafbc7e267f"
 
   app_replicas  = 1
   image_tag     = local.matomo.matomo_image_tag
