@@ -5,7 +5,7 @@ locals {
 }
 
 module "matomo" {
-  source = "github.com/serlo/infrastructure-modules-shared//matomo?ref=e4b728cedce1c6b3d1973028c60e6157411ef3e6"
+  source = "github.com/serlo/infrastructure-modules-shared//matomo?ref=dc5d73bc3919af66e281f6be6ba1301f94bca936"
 
   app_replicas  = 1
   image_tag     = local.matomo.matomo_image_tag

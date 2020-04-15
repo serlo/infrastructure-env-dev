@@ -13,9 +13,9 @@ locals {
     }
 
     varnish_image                            = "eu.gcr.io/serlo-shared/varnish:6.0"
-    athene2_enable_tracking_hotjar           = "false"
-    athene2_enable_tracking_google_analytics = "false"
-    athene2_enable_tracking_matomo           = "true"
+    athene2_enable_tracking_hotjar           = false
+    athene2_enable_tracking_google_analytics = false
+    athene2_enable_tracking_matomo           = true
   }
 }
 
