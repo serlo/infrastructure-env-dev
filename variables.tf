@@ -37,21 +37,6 @@ variable "athene2_php_smtp_password" {
   description = "Password for smtp"
 }
 
-variable "athene2_enable_tracking_hotjar" {
-  description = "Flag whether to activate HotJar tracking or not -> usually only set to true in production"
-  default     = "false"
-}
-
-variable "athene2_enable_tracking_google_analytics" {
-  description = "Flag whether to activate Google Analytics tracking or not -> usually only set to true in production"
-  default     = "false"
-}
-
-variable "athene2_enable_tracking_matomo" {
-  description = "Flag whether to activate Matomo tracking or not -> usually only set to true in production"
-  default     = "false"
-}
-
 variable "athene2_php_recaptcha_key" {
   description = "Key for recaptcha"
 }

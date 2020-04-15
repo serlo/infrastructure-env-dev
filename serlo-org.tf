@@ -11,6 +11,11 @@ locals {
       legacy_editor_renderer = "2.1.0"
       varnish                = "6.0.2"
     }
+
+    varnish_image                            = "eu.gcr.io/serlo-shared/varnish:6.0"
+    athene2_enable_tracking_hotjar           = false
+    athene2_enable_tracking_google_analytics = false
+    athene2_enable_tracking_matomo           = true
   }
 }
 
@@ -58,9 +63,9 @@ module "serlo_org" {
       secret = module.api_secrets.serlo_org
     }
 
-    enable_tracking_hotjar           = var.athene2_enable_tracking_hotjar
-    enable_tracking_google_analytics = var.athene2_enable_tracking_google_analytics
-    enable_tracking_matomo           = var.athene2_enable_tracking_matomo
+    enable_tracking_hotjar           = local.serlo_org.athene2_enable_tracking_hotjar
+    enable_tracking_google_analytics = local.serlo_org.athene2_enable_tracking_google_analytics
+    enable_tracking_matomo           = local.serlo_org.athene2_enable_tracking_matomo
     matomo_tracking_domain           = "analytics.${local.domain}"
   }
 
