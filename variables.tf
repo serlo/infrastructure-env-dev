@@ -37,8 +37,18 @@ variable "athene2_php_smtp_password" {
   description = "Password for smtp"
 }
 
-variable "athene2_php_tracking_switch" {
-  description = "Flag whether to activate tracking or not -> usually only set to true in production"
+variable "athene2_enable_tracking_hotjar" {
+  description = "Flag whether to activate HotJar tracking or not -> usually only set to true in production"
+  default     = "false"
+}
+
+variable "athene2_enable_tracking_google_analytics" {
+  description = "Flag whether to activate Google Analytics tracking or not -> usually only set to true in production"
+  default     = "false"
+}
+
+variable "athene2_enable_tracking_matomo" {
+  description = "Flag whether to activate Matomo tracking or not -> usually only set to true in production"
   default     = "false"
 }
 
@@ -52,19 +62,4 @@ variable "athene2_php_recaptcha_secret" {
 
 variable "athene2_php_newsletter_key" {
   description = "Key for newsletter"
-}
-
-variable "api_cache_account" {
-  description = "Cloudflare account for API cache"
-  type        = string
-}
-
-variable "api_cache_namespace" {
-  description = "Cloudflare Worker KV namespace for API cache"
-  type        = string
-}
-
-variable "api_cache_token" {
-  description = "Cloudflare API token for API cache"
-  type        = string
 }

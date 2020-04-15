@@ -2,20 +2,20 @@ locals {
   serlo_org = {
     image_tags = {
       server = {
-        httpd             = "10.2.1"
-        php               = "10.2.1"
-        migrate           = "10.2.1"
+        httpd             = "11.1.0"
+        php               = "11.1.0"
+        migrate           = "11.1.0"
         notifications_job = "2.1.0"
       }
       editor_renderer        = "8.1.0"
       legacy_editor_renderer = "2.1.0"
-      frontend               = "6.0.0"
+      varnish                = "6.0.2"
     }
-    varnish_image = "eu.gcr.io/serlo-shared/varnish:6.0"
   }
 }
+
 module "serlo_org" {
-  source = "github.com/serlo/infrastructure-modules-serlo.org.git//?ref=8d6e1782037a9e45c462fb6656cf21be6d1d9a7a"
+  source = "github.com/serlo/infrastructure-modules-serlo.org.git//?ref=e1f7e2942ab2bc4a8307f0e67985f4bed0692162"
 
   namespace         = kubernetes_namespace.serlo_org_namespace.metadata.0.name
   image_pull_policy = "IfNotPresent"
@@ -26,29 +26,6 @@ module "serlo_org" {
 
     domain = local.domain
 
-    resources = {
-      httpd = {
-        limits = {
-          cpu    = "200m"
-          memory = "200Mi"
-        }
-        requests = {
-          cpu    = "100m"
-          memory = "100Mi"
-        }
-      }
-      php = {
-        limits = {
-          cpu    = "700m"
-          memory = "600Mi"
-        }
-        requests = {
-          cpu    = "400m"
-          memory = "200Mi"
-        }
-      }
-    }
-
     recaptcha = {
       key    = var.athene2_php_recaptcha_key
       secret = var.athene2_php_recaptcha_secret
@@ -57,7 +34,6 @@ module "serlo_org" {
     smtp_password = var.athene2_php_smtp_password
     mailchimp_key = var.athene2_php_newsletter_key
 
-    enable_tracking   = var.athene2_php_tracking_switch
     enable_basic_auth = true
     enable_cronjobs   = true
     enable_mail_mock  = true
@@ -77,27 +53,27 @@ module "serlo_org" {
     hydra_admin_uri = module.hydra.admin_uri
     feature_flags   = "[]"
 
-    api_cache = {
-      account   = var.api_cache_account
-      namespace = var.api_cache_namespace
-      token     = var.api_cache_token
+    api = {
+      host   = module.api_server.host
+      secret = module.api_secrets.serlo_org
     }
+
+    enable_tracking_hotjar           = var.athene2_enable_tracking_hotjar
+    enable_tracking_google_analytics = var.athene2_enable_tracking_google_analytics
+    enable_tracking_matomo           = var.athene2_enable_tracking_matomo
+    matomo_tracking_domain           = "analytics.${local.domain}"
   }
 
   editor_renderer = {
-    app_replicas = 1
-    image_tag    = local.serlo_org.image_tags.editor_renderer
+    image_tag = local.serlo_org.image_tags.editor_renderer
   }
 
   legacy_editor_renderer = {
-    app_replicas = 1
-    image_tag    = local.serlo_org.image_tags.legacy_editor_renderer
+    image_tag = local.serlo_org.image_tags.legacy_editor_renderer
   }
 
   varnish = {
-    app_replicas = 1
-    image        = local.serlo_org.varnish_image
-    memory       = "100M"
+    image_tag = local.serlo_org.image_tags.varnish
   }
 }
 
