@@ -5,7 +5,7 @@ locals {
 }
 
 module "matomo" {
-  source = "github.com/serlo/infrastructure-modules-shared//matomo?ref=dc5d73bc3919af66e281f6be6ba1301f94bca936"
+  source = "github.com/serlo/infrastructure-modules-shared//matomo?ref=3fa3f9f248016a1f455cea4413d72042e05543ec"
 
   app_replicas  = 1
   image_tag     = local.matomo.matomo_image_tag
@@ -25,7 +25,7 @@ resource "kubernetes_namespace" "matomo_namespace" {
 }
 
 module "matomo_ingress" {
-  source = "github.com/serlo/infrastructure-modules-shared.git//ingress?ref=e4b728cedce1c6b3d1973028c60e6157411ef3e6"
+  source = "github.com/serlo/infrastructure-modules-shared.git//ingress?ref=3fa3f9f248016a1f455cea4413d72042e05543ec"
 
   name      = "matomo"
   namespace = kubernetes_namespace.matomo_namespace.metadata.0.name
