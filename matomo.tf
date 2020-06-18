@@ -25,7 +25,7 @@ resource "kubernetes_namespace" "matomo_namespace" {
 }
 
 module "matomo_ingress" {
-  source = "github.com/serlo/infrastructure-modules-shared.git//ingress?ref=35e7e47d61b4fa5a539910594398d257fb797839"
+  source = "github.com/serlo/infrastructure-modules-shared.git//ingress?ref=46399534a03aca5dfd1b95d9ec11c37d2b85523f"
 
   name      = "matomo"
   namespace = kubernetes_namespace.matomo_namespace.metadata.0.name

@@ -77,7 +77,7 @@ module "athene2_dbsetup" {
 }
 
 module "ingress-nginx" {
-  source = "github.com/serlo/infrastructure-modules-shared.git//ingress-nginx?ref=35e7e47d61b4fa5a539910594398d257fb797839"
+  source = "github.com/serlo/infrastructure-modules-shared.git//ingress-nginx?ref=46399534a03aca5dfd1b95d9ec11c37d2b85523f"
 
   namespace   = kubernetes_namespace.ingress_nginx_namespace.metadata.0.name
   ip          = module.cluster.address
