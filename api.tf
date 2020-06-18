@@ -13,11 +13,11 @@ module "api_redis" {
 }
 
 module "api_secrets" {
-  source = "github.com/serlo/infrastructure-modules-api.git//secrets?ref=03a772b0b85df65e38d82cf59494edd5389c3fdf"
+  source = "github.com/serlo/infrastructure-modules-api.git//secrets?ref=d92d7a4a839737ce436e0da1ceada339fefd1f71"
 }
 
 module "api_server" {
-  source = "github.com/serlo/infrastructure-modules-api.git//server?ref=03a772b0b85df65e38d82cf59494edd5389c3fdf"
+  source = "github.com/serlo/infrastructure-modules-api.git//server?ref=d92d7a4a839737ce436e0da1ceada339fefd1f71"
 
   namespace         = kubernetes_namespace.api_namespace.metadata.0.name
   image_tag         = local.api.image_tag
