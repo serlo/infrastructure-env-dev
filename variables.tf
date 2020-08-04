@@ -48,3 +48,11 @@ variable "athene2_php_recaptcha_secret" {
 variable "athene2_php_newsletter_key" {
   description = "Key for newsletter"
 }
+
+variable "api_active_donors_google_api_key" {
+  type = string
+}
+
+variable "api_active_donors_google_spreadsheet_id" {
+  type = string
+}
