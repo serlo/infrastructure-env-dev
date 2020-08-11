@@ -3,11 +3,12 @@ locals {
     grafana_image_tag        = "1.5.0"
     mysql_importer_image_tag = "1.4.1"
     aggregator_image_tag     = "1.6.4"
+    mfnf_importer_image_tag  = "1.0.0"
   }
 }
 
 module "kpi" {
-  source = "github.com/serlo/infrastructure-modules-kpi.git//kpi?ref=v1.3.1"
+  source = "github.com/serlo/infrastructure-modules-kpi.git//kpi?ref=v1.4.0"
 
   domain = local.domain
 
@@ -24,6 +25,7 @@ module "kpi" {
   grafana_image        = "eu.gcr.io/serlo-shared/kpi-grafana:${local.kpi.grafana_image_tag}"
   mysql_importer_image = "eu.gcr.io/serlo-shared/kpi-mysql-importer:${local.kpi.mysql_importer_image_tag}"
   aggregator_image     = "eu.gcr.io/serlo-shared/kpi-aggregator:${local.kpi.aggregator_image_tag}"
+  mfnf_importer_image  = "eu.gcr.io/serlo-shared/kpi-mfnf-importer:${local.kpi.mfnf_importer_image_tag}"
 }
 
 module "kpi_metrics" {
