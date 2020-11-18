@@ -2,13 +2,13 @@ locals {
   serlo_org = {
     image_tags = {
       server = {
-        httpd             = "14.3.0"
-        php               = "14.3.0"
-        migrate           = "14.3.0"
-        notifications_job = "3.0.0"
+        httpd             = "14.4.2"
+        php               = "14.4.2"
+        migrate           = "14.4.2"
+        notifications_job = "3.0.1"
       }
-      editor_renderer        = "11.0.0"
-      legacy_editor_renderer = "3.0.0"
+      editor_renderer        = "11.0.1"
+      legacy_editor_renderer = "3.0.1"
       varnish                = "6.0.2"
     }
   }
@@ -62,7 +62,7 @@ module "serlo_org" {
     enable_tracking_hotjar           = false
     enable_tracking_google_analytics = false
     enable_tracking_simple_analytics = false
-    enable_tracking_matomo           = true
+    enable_tracking_matomo           = false
     matomo_tracking_domain           = "analytics.${local.domain}"
   }
 
