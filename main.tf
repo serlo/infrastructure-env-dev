@@ -67,7 +67,7 @@ module "gcloud_dbdump_reader" {
 }
 
 module "athene2_dbsetup" {
-  source                      = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_dbsetup?ref=v1.0.1"
+  source                      = "github.com/serlo/infrastructure-modules-serlo.org.git//athene2_dbsetup?ref=v1.0.2"
   namespace                   = kubernetes_namespace.serlo_org_namespace.metadata.0.name
   database_password_default   = var.athene2_database_password_default
   database_host               = module.gcloud_mysql.database_private_ip_address
@@ -77,7 +77,7 @@ module "athene2_dbsetup" {
 }
 
 module "ingress-nginx" {
-  source = "github.com/serlo/infrastructure-modules-shared.git//ingress-nginx?ref=v1.0.0"
+  source = "github.com/serlo/infrastructure-modules-shared.git//ingress-nginx?ref=v2.0.0"
 
   namespace   = kubernetes_namespace.ingress_nginx_namespace.metadata.0.name
   ip          = module.cluster.address
