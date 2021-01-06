@@ -56,7 +56,7 @@ module "serlo_org" {
 
     api = {
       host   = module.api.server_host
-      secret = module.api_secrets.serlo_org
+      secret = module.api.secrets_serlo_org
     }
 
     enable_tracking_hotjar           = false

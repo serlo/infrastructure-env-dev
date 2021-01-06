@@ -13,7 +13,7 @@ module "api_redis" {
 }
 
 module "api" {
-  source = "github.com/serlo/infrastructure-modules-api.git//?ref=v3.0.0"
+  source = "github.com/serlo/infrastructure-modules-api.git//?ref=v3.0.1"
 
   namespace         = kubernetes_namespace.api_namespace.metadata.0.name
   image_tag         = local.api.image_tag
@@ -39,10 +39,6 @@ module "api" {
   swr_queue_worker = {
     concurrency = 5
   }
-}
-
-module "api_secrets" {
-  source = "github.com/serlo/infrastructure-modules-api.git//secrets?ref=v2.0.0"
 }
 
 module "api_server_ingress" {
