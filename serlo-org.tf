@@ -55,7 +55,7 @@ module "serlo_org" {
     autoreview_taxonomy_term_ids = "[106082]"
 
     api = {
-      host   = module.api_server.host
+      host   = module.api.server_host
       secret = module.api_secrets.serlo_org
     }
 
